@@ -1,32 +1,72 @@
 [
   {
-    "rate_name": "接続テスト用",
-    "room_name": "RoomA1",
-    "start_time": "10:00",
-    "end_time": "20:00",
-    "min_price": 3000,
+    "studio_id": "TKYSA",
+    "studio_name": "東京スタジオA",
+    "official_url": "https://example.com/tokyo-a",
+    "room_id": "TKYSA_A1",
+    "room_name": "Room A1 (大)",
+    "area_sqm": 80,
     "recommended_max": 20,
-    "cost_per_person": 150,
-    "studio_name": "東京スタジオA"
-  },
-  {
-    "rate_name": "テスト2",
-    "room_name": "RoomA2",
+    "notes": "音響設備充実。30分単位での利用も可能。",
+    "rate_name": "通常料金",
     "start_time": "10:00",
     "end_time": "20:00",
-    "min_price": 2000,
+    "min_price": 5000 
+  },
+  {
+    "studio_id": "TKYSA",
+    "studio_name": "東京スタジオA",
+    "official_url": "https://example.com/tokyo-a",
+    "room_id": "TKYSA_A1",
+    "room_name": "Room A1 (大)",
+    "area_sqm": 80,
+    "recommended_max": 20,
+    "notes": "音響設備充実。30分単位での利用も可能。",
+    "rate_name": "【特別】深夜パック",
+    "start_time": "23:00",
+    "end_time": "06:00",
+    "min_price": 18000
+  },
+  {
+    "studio_id": "TKYSA",
+    "studio_name": "東京スタジオA",
+    "official_url": "https://example.com/tokyo-a",
+    "room_id": "TKYSA_A2",
+    "room_name": "Room A2 (中)",
+    "area_sqm": 45,
     "recommended_max": 10,
-    "cost_per_person": 200,
-    "studio_name": "東京スタジオA"
-  },
-  {
-    "rate_name": "テスト3",
-    "room_name": "RoomA1",
+    "notes": "更衣室あり。1時間単位のみ。",
+    "rate_name": "通常料金",
     "start_time": "10:00",
     "end_time": "20:00",
-    "min_price": 1000,
+    "min_price": 3000
+  },
+  {
+    "studio_id": "SBYSA",
+    "studio_name": "渋谷スタジオA",
+    "official_url": "https://example.com/shibuya-a",
+    "room_id": "SBYSA_A1",
+    "room_name": "Room A1 (小)",
+    "area_sqm": 25,
     "recommended_max": 5,
-    "cost_per_person": 200,
-    "studio_name": "渋谷スタジオA"
+    "notes": "ヨガ・個人練習向け。",
+    "rate_name": "通常料金",
+    "start_time": "10:00",
+    "end_time": "20:00",
+    "min_price": 2500
+  },
+  {
+    "studio_id": "SBYSA",
+    "studio_name": "渋谷スタジオA",
+    "official_url": "https://example.com/shibuya-a",
+    "room_id": "SBYSA_A1",
+    "room_name": "Room A1 (小)",
+    "area_sqm": 25,
+    "recommended_max": 5,
+    "notes": "ヨガ・個人練習向け。",
+    "rate_name": "深夜ナイトパック",
+    "start_time": "23:00",
+    "end_time": "06:00",
+    "min_price": 10000
   }
 ]

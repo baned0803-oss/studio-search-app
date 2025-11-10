@@ -426,3 +426,112 @@ button#searchBtn:active {
         font-size: 28px;
     }
 }
+/* --- 追加CSS --- */
+
+/* 検索モード切り替えボタン */
+.search-toggle {
+    display: flex;
+    margin-bottom: 25px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 12px;
+    padding: 5px;
+    background: rgba(30, 41, 59, 0.6);
+}
+
+.search-toggle button {
+    flex-grow: 1;
+    padding: 10px 15px;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.search-toggle button.active {
+    background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+    color: white;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
+
+/* 面積情報表示 */
+.area-info {
+    font-size: 14px;
+    color: #94a3b8;
+    margin-bottom: 25px;
+    padding: 0 5px;
+    text-align: center;
+}
+
+.area-info strong {
+    color: #60a5fa;
+    font-weight: 700;
+}
+
+
+/* コンテンツリンクボタン */
+.content-links {
+    text-align: center;
+    margin-top: -30px; /* controlsの下に少し食い込ませる */
+    margin-bottom: 50px;
+}
+
+.link-button {
+    display: inline-block;
+    background: rgba(148, 163, 184, 0.1);
+    color: #94a3b8;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin: 0 10px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.link-button:hover {
+    background: rgba(148, 163, 184, 0.2);
+    color: #e0e7ff;
+    border-color: #60a5fa;
+    transform: translateY(-2px);
+}
+
+/* コンテンツセクション */
+.content-section {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 20px;
+    padding: 40px;
+    margin-top: 50px;
+    color: #e0e7ff;
+}
+
+.content-section h2 {
+    font-size: 28px;
+    color: #60a5fa;
+    margin-bottom: 20px;
+    border-bottom: 2px solid rgba(148, 163, 184, 0.2);
+    padding-bottom: 10px;
+}
+
+.content-section p {
+    margin-bottom: 15px;
+    line-height: 1.8;
+}
+
+.content-section ul {
+    list-style: disc;
+    margin-left: 20px;
+    margin-bottom: 20px;
+    padding-left: 10px;
+}
+
+/* カード内のメタ情報表示の強化 */
+.card .meta-item strong.warning {
+    color: #fb7185; /* 赤系統 */
+    font-weight: 800;
+}
