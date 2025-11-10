@@ -96,6 +96,7 @@ h1 {
     letter-spacing: 1px;
 }
 
+input[type="date"],
 input[type="time"], 
 input[type="number"] {
     padding: 14px 16px;
@@ -108,6 +109,8 @@ input[type="number"] {
     font-family: inherit;
 }
 
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="date"]:focus,
 input[type="time"]:focus, 
 input[type="number"]:focus {
     border-color: #3b82f6;
