@@ -4,285 +4,523 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>レンタルスタジオ比較（プロトタイプ）</title>
+    <!-- ⭐ フォントはheadタグの中に入れる -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
     /* ベーススタイル */
-    body {
-        font-family: 'Inter', 'Noto Sans JP', Arial, Helvetica, sans-serif;
+    * {
         margin: 0;
-        padding: 20px;
-        background-color: #f8f9fa; /* 背景をライトグレーに */
-        color: #333;
+        padding: 0;
+        box-sizing: border-box;
     }
+
+    body {
+        font-family: 'Inter', 'Noto Sans JP', sans-serif;
+        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        color: #e0e7ff;
+        min-height: 100vh;
+        padding: 0;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    /* 背景アニメーション */
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* ヘッダー */
+    header {
+        text-align: center;
+        margin-bottom: 50px;
+        animation: fadeInDown 0.8s ease;
+    }
+
     h1 {
-        font-size: 26px;
-        margin: 0 0 24px 0;
-        color: #212529;
-        border-bottom: 3px solid #007bff; /* メインカラーの青 */
-        padding-bottom: 8px;
+        font-size: 48px;
+        font-weight: 900;
+        background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #ec4899 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 12px;
+        letter-spacing: -1px;
     }
-    
-    /* 検索フォームのコンテナ */
+
+    .subtitle {
+        color: #94a3b8;
+        font-size: 16px;
+        font-weight: 500;
+        letter-spacing: 2px;
+    }
+
+    /* 検索フォーム */
     .controls {
-        display: flex;
-        gap: 20px;
-        flex-wrap: wrap;
-        margin-bottom: 30px;
-        align-items: flex-end; /* ボタンと入力欄のベースラインを揃える */
-        padding: 20px;
-        background: #ffffff;
-        border-radius: 10px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 影を強調 */
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 20px;
+        padding: 35px;
+        margin-bottom: 50px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4),
+                    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+        animation: fadeInUp 0.8s ease 0.2s both;
     }
-    .controls > div {
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 25px;
+        margin-bottom: 25px;
+    }
+
+    .form-group {
         display: flex;
         flex-direction: column;
-        min-width: 150px; /* 入力欄の最小幅 */
     }
-    .controls label {
-        font-size: 14px;
-        color: #555;
-        font-weight: 500;
-        margin-bottom: 5px;
+
+    .form-group label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #94a3b8;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
-    input[type="time"], input[type="number"] {
-        padding: 10px 12px;
-        border: 1px solid #ced4da;
-        border-radius: 6px;
+
+    input[type="time"], 
+    input[type="number"] {
+        padding: 14px 16px;
+        border: 2px solid rgba(148, 163, 184, 0.2);
+        border-radius: 12px;
         font-size: 16px;
-        transition: border-color 0.3s, box-shadow 0.3s;
+        background: rgba(30, 41, 59, 0.6);
+        color: #e0e7ff;
+        transition: all 0.3s ease;
+        font-family: inherit;
     }
-    input[type="time"]:focus, input[type="number"]:focus {
-        border-color: #007bff;
-        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+
+    input[type="time"]:focus, 
+    input[type="number"]:focus {
+        border-color: #3b82f6;
+        background: rgba(30, 41, 59, 0.9);
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1),
+                    0 8px 16px rgba(59, 130, 246, 0.2);
         outline: none;
+        transform: translateY(-2px);
     }
-    
-    /* 検索ボタン */
+
+    input[type="time"]::-webkit-calendar-picker-indicator,
+    input[type="number"]::-webkit-inner-spin-button {
+        filter: invert(0.7);
+    }
+
     button#searchBtn {
-        background: #007bff;
+        background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
         color: #fff;
         border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
+        padding: 16px 40px;
+        border-radius: 12px;
         cursor: pointer;
-        font-weight: 600;
-        transition: background 0.3s, transform 0.1s;
-        box-shadow: 0 2px 4px rgba(0, 123, 255, 0.4);
-        height: 44px; /* 入力欄と高さを合わせる */
-    }
-    button#searchBtn:hover {
-        background: #0056b3;
-    }
-    button#searchBtn:active {
-        transform: scale(0.98);
-    }
-
-    /* 検索結果のコンテナ */
-    #result {
-        padding: 10px 0;
-    }
-    #result > .summary {
+        font-weight: 700;
         font-size: 16px;
-        font-weight: 600;
-        margin-bottom: 20px;
-        padding-bottom: 5px;
-        border-bottom: 1px solid #ddd;
-        color: #007bff;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        position: relative;
+        overflow: hidden;
     }
 
-    /* 結果カードのグリッド表示 */
+    button#searchBtn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    button#searchBtn:hover::before {
+        left: 100%;
+    }
+
+    button#searchBtn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 40px rgba(59, 130, 246, 0.4);
+    }
+
+    button#searchBtn:active {
+        transform: translateY(0);
+    }
+
+    /* 検索結果 */
+    #result {
+        animation: fadeIn 0.8s ease 0.4s both;
+    }
+
+    .summary {
+        font-size: 18px;
+        font-weight: 700;
+        color: #60a5fa;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: rgba(59, 130, 246, 0.1);
+        border-left: 4px solid #3b82f6;
+        border-radius: 12px;
+    }
+
+    /* カードグリッド */
     .card-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+        gap: 30px;
     }
 
-    /* 結果カード */
+    /* カード */
     .card {
-        padding: 20px;
-        border-radius: 10px;
-        background: #ffffff;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-        transition: transform 0.2s;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 20px;
+        padding: 30px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        animation: slideIn 0.6s ease forwards;
+        opacity: 0;
     }
+
+    .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.4s ease;
+    }
+
+    .card:hover::before {
+        transform: scaleX(1);
+    }
+
     .card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        transform: translateY(-8px);
+        border-color: rgba(59, 130, 246, 0.5);
+        box-shadow: 0 20px 60px rgba(59, 130, 246, 0.2),
+                    0 0 0 1px rgba(59, 130, 246, 0.3) inset;
     }
+
+    .card:nth-child(1) { animation-delay: 0.1s; }
+    .card:nth-child(2) { animation-delay: 0.2s; }
+    .card:nth-child(3) { animation-delay: 0.3s; }
+    .card:nth-child(4) { animation-delay: 0.4s; }
+    .card:nth-child(5) { animation-delay: 0.5s; }
+
     .card h3 {
-        margin: 0 0 5px 0;
-        font-size: 20px;
-        color: #212529;
+        font-size: 24px;
+        font-weight: 800;
+        color: #fff;
+        margin-bottom: 8px;
         line-height: 1.3;
     }
-    .card .room-name {
-        font-size: 16px;
-        color: #555;
-        margin-bottom: 15px;
-        border-bottom: 1px dashed #eee;
-        padding-bottom: 8px;
+
+    .room-name {
+        font-size: 14px;
+        color: #94a3b8;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        font-weight: 500;
     }
 
-    /* メタ情報（詳細） */
+    /* 価格表示 */
+    .cost-per-person {
+        background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(139, 92, 246, 0.2));
+        border: 2px solid rgba(236, 72, 153, 0.3);
+        border-radius: 16px;
+        padding: 20px;
+        margin: 20px 0;
+        text-align: center;
+    }
+
+    .cost-per-person .label {
+        font-size: 12px;
+        color: #cbd5e1;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+    }
+
+    .cost-per-person .price {
+        font-size: 36px;
+        font-weight: 900;
+        background: linear-gradient(135deg, #ec4899, #a78bfa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .cost-per-person.disabled {
+        background: rgba(148, 163, 184, 0.1);
+        border-color: rgba(148, 163, 184, 0.2);
+    }
+
+    .cost-per-person.disabled .price {
+        color: #64748b;
+        background: none;
+        -webkit-text-fill-color: #64748b;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    /* メタ情報 */
     .meta-item {
         display: flex;
         justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.1);
         font-size: 14px;
-        margin-bottom: 8px;
-        padding: 3px 0;
-        border-bottom: 1px dotted #eee;
     }
-    .meta-item:last-child {
+
+    .meta-item:last-of-type {
         border-bottom: none;
-        margin-bottom: 0;
     }
-    .meta-item strong {
-        color: #212529;
-        font-weight: 600;
-    }
-    
-    /* 1人あたり費用を強調 */
-    .cost-per-person {
-        font-size: 24px;
-        font-weight: 700;
-        color: #dc3545; /* 赤色で目立たせる */
-        background-color: #ffe8e8; /* 薄い赤の背景 */
-        padding: 10px;
-        border-radius: 6px;
-        margin: 15px 0;
-        text-align: center;
-        letter-spacing: 0.5px;
-    }
-    .cost-per-person.disabled {
-        background-color:#f1f1f1; 
-        color:#888;
-        font-size: 18px;
+
+    .meta-item span {
+        color: #94a3b8;
         font-weight: 500;
     }
 
-    /* 予約ボタンのスタイル調整 */
-    .card a button {
-        width: 100%;
-        margin-top: 15px;
-        background: #28a745; /* 緑色 (Success Color) */
-        box-shadow: 0 2px 4px rgba(40, 167, 69, 0.4);
+    .meta-item strong {
+        color: #e0e7ff;
+        font-weight: 700;
+        font-size: 16px;
     }
-    .card a button:hover {
-        background: #1e7e34;
+
+    /* 予約ボタン */
+    .card a {
+        display: block;
+        margin-top: 20px;
+    }
+
+    .card button {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        letter-spacing: 0.5px;
+        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+    }
+
+    .card button:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(16, 185, 129, 0.4);
     }
 
     /* 該当なしメッセージ */
-    #result > p:not(.summary) {
-        grid-column: 1 / -1; /* グリッド全体に広げる */
+    .no-results {
         text-align: center;
-        color: #555;
-        padding: 30px;
-        background: #f1f1f1;
-        border-radius: 8px;
+        padding: 60px 20px;
+        background: rgba(15, 23, 42, 0.6);
+        border: 2px dashed rgba(148, 163, 184, 0.3);
+        border-radius: 20px;
+        color: #94a3b8;
+        font-size: 18px;
     }
 
-    /* レスポンシブデザイン (モバイル対応) */
-    @media (max-width: 600px) {
-        body {
-            padding: 15px;
+    /* アニメーション */
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
         }
-        .controls {
-            flex-direction: column;
-            gap: 15px;
-            padding: 15px;
-        }
-        .controls > div {
-            min-width: 100%;
-        }
-        button#searchBtn {
-            width: 100%;
-            margin-top: 5px;
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
-</style>
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* レスポンシブ */
+    @media (max-width: 768px) {
+        .container {
+            padding: 20px 15px;
+        }
+
+        h1 {
+            font-size: 32px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+        }
+
+        .controls {
+            padding: 25px 20px;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .card-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .card h3 {
+            font-size: 20px;
+        }
+
+        .cost-per-person .price {
+            font-size: 28px;
+        }
+    }
+    </style>
 </head>
 <body>
-    <h1>レンタルスタジオ比較（プロトタイプ）</h1>
-    <div class="controls">
-        <div>
-            <label>時間 (希望開始時間): <input id="timeInput" type="time" /></label>
+    <!-- ⭐ containerで全体を囲む -->
+    <div class="container">
+        <header>
+            <h1>レンタルスタジオ比較（プロトタイプ）</h1>
+            <p class="subtitle">あなたに最適なスタジオを見つけよう</p>
+        </header>
+
+        <div class="controls">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>開始時間</label>
+                    <input id="timeInput" type="time" />
+                </div>
+                <div class="form-group">
+                    <label>最大価格 (円)</label>
+                    <input id="priceInput" type="number" min="0" step="100" />
+                </div>
+                <div class="form-group">
+                    <label>希望人数</label>
+                    <input id="peopleInput" type="number" min="1" step="1" />
+                </div>
+            </div>
+            <button id="searchBtn">🔍 スタジオを検索</button>
         </div>
-        <div>
-            <label>最大価格(円): <input id="priceInput" type="number" min="0" step="100" /></label>
-        </div>
-        <div>
-            <label>希望人数: <input id="peopleInput" type="number" min="1" step="1" /></label>
-        </div>
-        <div>
-            <button id="searchBtn">検索</button>
-        </div>
+      
+        <div id="result"></div>
     </div>
-    <div id="result"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
 
     <script>
-        // --------- 設定: Airtable 公開ビューの CSV URL をここに入れてください ----------
-        // JSONファイルから読み込むため、URLは空欄にします
         const AIRTABLE_CSV_URL = ''; 
-        
-        // localStorageキー
-        const LSKEY = 'studio_search_conditions_v2'; // v2にキーを変更して保存条件をリセット
+        const LSKEY = 'studio_search_conditions_v2';
 
-        // ヘルパー: "HH:MM" => minutes
         function toMinutes(hhmm){
             if(!hhmm) return null;
             const [h,m] = hhmm.split(':').map(Number);
             return h*60 + m;
         }
 
-        // エスケープ（簡易）
-        function escapeHtml(s){ return String(s || '').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>'); }
-        function escapeAttr(s){ return String(s || '').replace(/"/g,'"'); }
+        function escapeHtml(s){ return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+        function escapeAttr(s){ return String(s || '').replace(/"/g,'&quot;'); }
 
-        // 要素取得
         const timeInput = document.getElementById('timeInput');
         const priceInput = document.getElementById('priceInput');
         const peopleInput = document.getElementById('peopleInput');
         const searchBtn = document.getElementById('searchBtn');
         const result = document.getElementById('result');
 
-        // 初期値復元
         const saved = JSON.parse(localStorage.getItem(LSKEY) || '{}');
         if(saved.time) timeInput.value = saved.time;
         if(saved.price) priceInput.value = saved.price;
         if(saved.people) peopleInput.value = saved.people;
 
-        // レンタリング
-        function renderCards(items, requestedPeople){ // 💡 希望人数を受け取る
+        // ⭐ 価格表示を新しいデザインに更新
+        function renderCards(items, requestedPeople){
             result.innerHTML = '';
             if(items.length === 0){
-                result.innerHTML = '<p>該当するスタジオは見つかりませんでした。</p>';
+                result.innerHTML = '<div class="no-results">該当するスタジオは見つかりませんでした。<br>条件を変更して再度検索してください。</div>';
                 return;
             }
-            // 検索概要を表示
-            const summary = document.createElement('p');
-            summary.innerHTML = `**${items.length}件**のスタジオが見つかりました。(希望人数 ${requestedPeople}名での計算)`;
-            summary.style.fontWeight = 'bold';
-            summary.style.marginBottom = '20px';
-            summary.style.padding = '10px 0';
+
+            const summary = document.createElement('div');
+            summary.className = 'summary';
+            summary.innerHTML = `✨ <strong>${items.length}件</strong>のスタジオが見つかりました (希望人数: ${requestedPeople}名)`;
             result.appendChild(summary);
 
+            const grid = document.createElement('div');
+            grid.className = 'card-grid';
 
             items.forEach(it=>{
-                // データ欠損時の安全チェック
                 if (!it.rate || !it.room) return; 
                 
                 const div = document.createElement('div');
                 div.className = 'card';
                 
-                // 1人あたり費用を計算人数で表示
+                // ⭐ 新しい価格表示デザイン
                 const costHtml = it.cost_per_person
-                    ? `<div class="cost-per-person">1人あたり ${Math.round(it.cost_per_person).toLocaleString()}円</div>`
-                    : '<div class="cost-per-person" style="background-color:#f8f9fa; color:#888;">計算対象外</div>';
+                    ? `<div class="cost-per-person">
+                         <div class="label">1人あたり</div>
+                         <div class="price">¥${Math.round(it.cost_per_person).toLocaleString()}</div>
+                       </div>`
+                    : '<div class="cost-per-person disabled"><div class="price">計算対象外</div></div>';
                 
                 div.innerHTML = `
                     <div>
@@ -292,38 +530,39 @@
                         ${costHtml}
 
                         <div class="meta-item">
-                            <span>基本料金 (${escapeHtml(it.rate.rate_name || '')}):</span>
-                            <strong>${(it.rate.min_price ?? '-').toLocaleString()}円</strong>
+                            <span>基本料金 (${escapeHtml(it.rate.rate_name || '')})</span>
+                            <strong>¥${(it.rate.min_price ?? '-').toLocaleString()}</strong>
                         </div>
                         <div class="meta-item">
-                            <span>部屋の推奨最大人数:</span>
+                            <span>推奨最大人数</span>
                             <strong>${(it.room.recommended_max ?? '-')}人</strong>
                         </div>
                         <div class="meta-item">
-                            <span>検索時の希望人数:</span>
+                            <span>検索時の人数</span>
                             <strong>${requestedPeople}人</strong>
                         </div>
                     </div>
-                    <p style="margin-top:10px;"><a href="${escapeAttr(it.studio_url || '#')}" target="_blank"><button>この部屋を予約する</button></a></p>
+                    <a href="${escapeAttr(it.studio_url || '#')}" target="_blank">
+                        <button>この部屋を予約する →</button>
+                    </a>
                 `;
-                result.appendChild(div);
+                grid.appendChild(div);
             });
+            
+            result.appendChild(grid);
         }
 
-        // 検索処理
         function runSearch(studios){
             function search(){
                 const st = timeInput.value;
                 const maxPrice = priceInput.value ? Number(priceInput.value) : Infinity;
-                const requestedPeople = peopleInput.value ? Number(peopleInput.value) : 0; // 💡 希望人数として取得
+                const requestedPeople = peopleInput.value ? Number(peopleInput.value) : 0;
                 
-                // 検索条件を保存
                 localStorage.setItem(LSKEY, JSON.stringify({time:st, price: priceInput.value, people: peopleInput.value}));
                 
                 const tmin = toMinutes(st);
                 const results = [];
 
-                // 希望人数が0または無効な場合は検索しない
                 if(requestedPeople <= 0) {
                     renderCards([], requestedPeople);
                     return;
@@ -335,15 +574,11 @@
                             const s = toMinutes(rate.start_time);
                             const e = toMinutes(rate.end_time);
                             
-                            // 検索条件チェック
                             if(tmin === null) return;
                             if(!(s <= tmin && tmin < e)) return;
                             if(rate.min_price != null && rate.min_price > maxPrice) return;
-                            
-                            // フィルタリング: 推奨最大人数が、希望人数以上であること
                             if(room.recommended_max != null && room.recommended_max < requestedPeople) return; 
                             
-                            // 💡 Cost Per Person の計算 (希望人数で割る)
                             const isCalculable = rate.min_price != null && requestedPeople > 0;
                             const cost_per_person = isCalculable ? rate.min_price / requestedPeople : null; 
                             
@@ -359,21 +594,17 @@
                     });
                 });
 
-                // コスト per person でソート（nullは最後に回る）
                 results.sort((a,b)=>(a.cost_per_person ?? Infinity) - (b.cost_per_person ?? Infinity));
-                renderCards(results, requestedPeople); // 💡 希望人数を渡す
+                renderCards(results, requestedPeople);
             }
 
             searchBtn.addEventListener('click', search);
             [timeInput, priceInput, peopleInput].forEach(inp=>{
                 inp.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') search(); });
             });
-            // データロード後に初期検索を実行
             search();
         }
 
-
-        // ヘルパー：価格から「円」と日付を削除し、クリーンなデータを返す関数
         function cleanRateData(r) {
             let price = (r.min_price || '').toString().replace(/[^\d.]/g, '');
             price = price ? Number(price) : null;
@@ -389,7 +620,6 @@
             };
         }
 
-        // CSV/JSON共通のデータ処理ロジック
         function processFetchedData(rows) {
             const studiosMap = {};
             rows.forEach(r=>{
@@ -428,8 +658,6 @@
             return Object.values(studiosMap).map(s=>({ id: s.id, studio_name: s.studio_name, official_url: s.official_url, rooms: Object.values(s.rooms) }));
         }
 
-        // CSV/JSONデータ取得関数（変更なし）
-        async function fetchCsvToStudios(url){ /* ... */ }
         async function fetchLocalJson(){ 
             const res = await fetch('data.json');
             if(!res.ok) throw new Error('data.json fetch failed: '+res.status + ' - JSONファイルが見つからないか、パスが間違っています。');
@@ -437,15 +665,10 @@
             return processFetchedData(data);
         }
 
-
-        // ==========================================================
-        // メイン処理：非同期の初期化関数にラップし、実行する 
-        // ==========================================================
         async function initializeApp(){
             try{
                 let studios;
                 
-                // 初期値設定 
                 if (!timeInput.value) { timeInput.value = '18:00'; }
                 if (!priceInput.value) { priceInput.value = '5000'; }
                 if (!peopleInput.value) { peopleInput.value = '5'; }
@@ -453,7 +676,6 @@
                 if(AIRTABLE_CSV_URL && AIRTABLE_CSV_URL.trim() !== ''){
                     console.log('Airtable CSVからのデータ取得を開始します...');
                     studios = await fetchCsvToStudios(AIRTABLE_CSV_URL);
-                    
                 } else {
                     console.log('AIRTABLE_CSV_URLが未設定のため、data.jsonからデータを読み込みます。');
                     studios = await fetchLocalJson();
@@ -466,7 +688,7 @@
                 
             }catch(err){
                 console.error('データの読み込みに失敗しました。', err);
-                result.innerHTML = '<p style="color:red;">データの読み込みに失敗しました。コンソール (F12) のエラーを確認してください。</p>';
+                result.innerHTML = '<div class="no-results" style="color:#ef4444;">データの読み込みに失敗しました。<br>コンソール (F12) のエラーを確認してください。</div>';
             }
         }
 
