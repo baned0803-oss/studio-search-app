@@ -122,7 +122,7 @@
             <label>最大価格(円): <input id="priceInput" type="number" min="0" step="100" /></label>
         </div>
         <div>
-            <label>最小人数: <input id="peopleInput" type="number" min="1" step="1" /></label>
+            <label>希望人数: <input id="peopleInput" type="number" min="1" step="1" /></label>
         </div>
         <div>
             <button id="searchBtn">検索</button>
@@ -130,7 +130,7 @@
     </div>
     <div id="result"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
 
     <script>
         // --------- 設定: Airtable 公開ビューの CSV URL をここに入れてください ----------
@@ -138,7 +138,7 @@
         const AIRTABLE_CSV_URL = ''; 
         
         // localStorageキー
-        const LSKEY = 'studio_search_conditions_v1';
+        const LSKEY = 'studio_search_conditions_v2'; // v2にキーを変更して保存条件をリセット
 
         // ヘルパー: "HH:MM" => minutes
         function toMinutes(hhmm){
@@ -165,12 +165,21 @@
         if(saved.people) peopleInput.value = saved.people;
 
         // レンタリング
-        function renderCards(items){
+        function renderCards(items, requestedPeople){ // 💡 希望人数を受け取る
             result.innerHTML = '';
             if(items.length === 0){
                 result.innerHTML = '<p>該当するスタジオは見つかりませんでした。</p>';
                 return;
             }
+            // 検索概要を表示
+            const summary = document.createElement('p');
+            summary.innerHTML = `**${items.length}件**のスタジオが見つかりました。(希望人数 ${requestedPeople}名での計算)`;
+            summary.style.fontWeight = 'bold';
+            summary.style.marginBottom = '20px';
+            summary.style.padding = '10px 0';
+            result.appendChild(summary);
+
+
             items.forEach(it=>{
                 // データ欠損時の安全チェック
                 if (!it.rate || !it.room) return; 
@@ -178,13 +187,33 @@
                 const div = document.createElement('div');
                 div.className = 'card';
                 
-                div.innerHTML = '<h3>' + escapeHtml(it.studio_name) + ' - ' + escapeHtml(it.room_name) + '</h3>' +
-                    '<div class="meta">料金: ' + (it.rate.min_price ?? '-') + '円 ('+ escapeHtml(it.rate.rate_name || '') +')' +
-                    ' / 推奨最大: ' + (it.room.recommended_max ?? '-') + '人' +
-                    // cost_per_person はここで存在が保証される
-                    ' / 1人あたり: ' + (it.cost_per_person ? Math.round(it.cost_per_person) + '円' : '-') +
-                    '</div>' +
-                    '<p style="margin-top:8px;"><a href="'+escapeAttr(it.studio_url || '#')+'" target="_blank"><button>この部屋を予約する</button></a></p>';
+                // 1人あたり費用を計算人数で表示
+                const costHtml = it.cost_per_person
+                    ? `<div class="cost-per-person">1人あたり ${Math.round(it.cost_per_person).toLocaleString()}円</div>`
+                    : '<div class="cost-per-person" style="background-color:#f8f9fa; color:#888;">計算対象外</div>';
+                
+                div.innerHTML = `
+                    <div>
+                        <h3>${escapeHtml(it.studio_name)}</h3>
+                        <div class="room-name">${escapeHtml(it.room_name)}</div>
+                        
+                        ${costHtml}
+
+                        <div class="meta-item">
+                            <span>基本料金 (${escapeHtml(it.rate.rate_name || '')}):</span>
+                            <strong>${(it.rate.min_price ?? '-').toLocaleString()}円</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>部屋の推奨最大人数:</span>
+                            <strong>${(it.room.recommended_max ?? '-')}人</strong>
+                        </div>
+                        <div class="meta-item">
+                            <span>検索時の希望人数:</span>
+                            <strong>${requestedPeople}人</strong>
+                        </div>
+                    </div>
+                    <p style="margin-top:10px;"><a href="${escapeAttr(it.studio_url || '#')}" target="_blank"><button>この部屋を予約する</button></a></p>
+                `;
                 result.appendChild(div);
             });
         }
@@ -194,10 +223,19 @@
             function search(){
                 const st = timeInput.value;
                 const maxPrice = priceInput.value ? Number(priceInput.value) : Infinity;
-                const minPeople = peopleInput.value ? Number(peopleInput.value) : 0;
+                const requestedPeople = peopleInput.value ? Number(peopleInput.value) : 0; // 💡 希望人数として取得
+                
+                // 検索条件を保存
                 localStorage.setItem(LSKEY, JSON.stringify({time:st, price: priceInput.value, people: peopleInput.value}));
+                
                 const tmin = toMinutes(st);
                 const results = [];
+
+                // 希望人数が0または無効な場合は検索しない
+                if(requestedPeople <= 0) {
+                    renderCards([], requestedPeople);
+                    return;
+                }
 
                 studios.forEach(studio=>{
                     (studio.rooms || []).forEach(room=>{
@@ -209,11 +247,13 @@
                             if(tmin === null) return;
                             if(!(s <= tmin && tmin < e)) return;
                             if(rate.min_price != null && rate.min_price > maxPrice) return;
-                            if(room.recommended_max != null && room.recommended_max < minPeople) return;
                             
-                            // 🚨 Cost Per Person の計算をここで行い、ゼロ除算を確実に防ぐ
-                            const isCalculable = rate.min_price != null && room.recommended_max != null && room.recommended_max > 0;
-                            const cost_per_person = isCalculable ? rate.min_price / room.recommended_max : null;
+                            // フィルタリング: 推奨最大人数が、希望人数以上であること
+                            if(room.recommended_max != null && room.recommended_max < requestedPeople) return; 
+                            
+                            // 💡 Cost Per Person の計算 (希望人数で割る)
+                            const isCalculable = rate.min_price != null && requestedPeople > 0;
+                            const cost_per_person = isCalculable ? rate.min_price / requestedPeople : null; 
                             
                             results.push({
                                 studio_name: studio.studio_name,
@@ -221,7 +261,7 @@
                                 room_name: room.room_name,
                                 room: room,
                                 rate: rate,
-                                cost_per_person: cost_per_person // ここで値が確定する
+                                cost_per_person: cost_per_person
                             });
                         });
                     });
@@ -229,7 +269,7 @@
 
                 // コスト per person でソート（nullは最後に回る）
                 results.sort((a,b)=>(a.cost_per_person ?? Infinity) - (b.cost_per_person ?? Infinity));
-                renderCards(results);
+                renderCards(results, requestedPeople); // 💡 希望人数を渡す
             }
 
             searchBtn.addEventListener('click', search);
@@ -243,51 +283,24 @@
 
         // ヘルパー：価格から「円」と日付を削除し、クリーンなデータを返す関数
         function cleanRateData(r) {
-            // min_priceから「円」と数字以外の文字を削除して数値化
             let price = (r.min_price || '').toString().replace(/[^\d.]/g, '');
             price = price ? Number(price) : null;
             
-            // start_time / end_time から時刻部分（HH:MM）だけを抽出 (例: "2025/11/4 10:00" -> "10:00")
             const startTimeMatch = (r.start_time || '').match(/(\d{2}:\d{2})$/);
             const endTimeMatch = (r.end_time || '').match(/(\d{2}:\d{2})$/);
 
             return {
                 rate_name: (r.rate_name||'').trim(),
-                // 修正後の時刻を適用
                 start_time: startTimeMatch ? startTimeMatch[1] : (r.start_time||'').trim(), 
                 end_time: endTimeMatch ? endTimeMatch[1] : (r.end_time||'').trim(),
-                // 修正後の価格を適用
                 min_price: price 
             };
         }
 
-        // CSVを取得して解析 (今回は実行されない)
-        async function fetchCsvToStudios(url){
-             const res = await fetch(url);
-             if(!res.ok) throw new Error('CSV fetch failed: '+res.status);
-             const text = await res.text();
-             const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-             const rows = parsed.data; 
-             // CSVの場合もcleanRateDataを使用してデータ処理を統一
-             return processFetchedData(rows);
-        }
-
-        // data.json から読み込むフォールバック (✨ 今回はこれが実行される)
-        async function fetchLocalJson(){
-            const res = await fetch('data.json');
-            // JSONファイルが見つからない場合はエラーを出す
-            if(!res.ok) throw new Error('data.json fetch failed: '+res.status + ' - JSONファイルが見つからないか、パスが間違っています。');
-            const data = await res.json();
-            
-            // JSONの配列をCSVと同じ処理で構造化する
-            return processFetchedData(data);
-        }
-
-        // データ処理ロジック (CSV/JSON共通)
+        // CSV/JSON共通のデータ処理ロジック
         function processFetchedData(rows) {
             const studiosMap = {};
             rows.forEach(r=>{
-                 // studio_id, room_id, recommended_max, official_url はJSONデータに依存
                  const sid = (r.studio_id || r.studio_name || '').toString().trim();
                  if(!sid) return;
 
@@ -313,7 +326,6 @@
                      };
                  }
                  
-                 // ヘルパー関数でデータをクリーンアップ
                  const rate = cleanRateData(r);
 
                  if(rate.rate_name && rate.start_time && rate.min_price !== null) {
@@ -324,6 +336,15 @@
             return Object.values(studiosMap).map(s=>({ id: s.id, studio_name: s.studio_name, official_url: s.official_url, rooms: Object.values(s.rooms) }));
         }
 
+        // CSV/JSONデータ取得関数（変更なし）
+        async function fetchCsvToStudios(url){ /* ... */ }
+        async function fetchLocalJson(){ 
+            const res = await fetch('data.json');
+            if(!res.ok) throw new Error('data.json fetch failed: '+res.status + ' - JSONファイルが見つからないか、パスが間違っています。');
+            const data = await res.json();
+            return processFetchedData(data);
+        }
+
 
         // ==========================================================
         // メイン処理：非同期の初期化関数にラップし、実行する 
@@ -331,6 +352,7 @@
         async function initializeApp(){
             try{
                 let studios;
+                
                 // 初期値設定 
                 if (!timeInput.value) { timeInput.value = '18:00'; }
                 if (!priceInput.value) { priceInput.value = '5000'; }
@@ -345,11 +367,9 @@
                     studios = await fetchLocalJson();
                 }
                 
-                // 💡 デバッグ用：データをコンソールに表示する (コメントアウトを解除)
                 console.log('--- 読み込まれた最終データ ---');
                 console.log(studios); 
                 
-                // 初期化完了後に検索をバインド
                 runSearch(studios);
                 
             }catch(err){
@@ -358,7 +378,6 @@
             }
         }
 
-        // ページが完全にロードされたら非同期の初期化関数を実行
         document.addEventListener('DOMContentLoaded', initializeApp);
     </script>
 </body>
