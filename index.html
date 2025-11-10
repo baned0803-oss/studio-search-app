@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>レンタルスタジオ比較（プロトタイプ）</title>
+    <style>
+        body {
+            font-family: 'Inter', Arial, Helvetica, sans-serif;
+            margin: 20px;
+            background-color: #f4f7f9;
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 24px;
+            color: #333;
+            border-bottom: 2px solid #0b84ff;
+            padding-bottom: 8px;
+        }
+        .controls {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+            align-items: center;
+            padding: 15px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .controls label {
+            font-size: 14px;
+            color: #555;
+            font-weight: 600;
+        }
+        input[type="time"], input[type="number"] {
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            transition: border-color 0.3s;
+            min-width: 120px;
+        }
+        input[type="time"]:focus, input[type="number"]:focus {
+            border-color: #0b84ff;
+            outline: none;
+        }
+        .card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.08);
+        }
+        .card h3 {
+            margin: 0 0 8px 0;
+            font-size: 20px;
+            color: #1a1a1a;
+        }
+        .meta {
+            color: #555;
+            font-size: 14px;
+        }
+        .meta p {
+            margin: 4px 0;
+        }
+        .meta strong {
+            color: #0b84ff;
+        }
+        button {
+            background: #0b84ff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s, transform 0.1s;
+        }
+        button:hover {
+            background: #0066cc;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        #result {
+            padding: 10px 0;
+        }
+
+        @media(max-width:768px){
+            .controls{
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .controls > div {
+                display: flex;
+                flex-direction: column;
+            }
+            input[type="time"], input[type="number"] {
+                min-width: 100%;
+                box-sizing: border-box;
+            }
+            button {
+                width: 100%;
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>レンタルスタジオ比較（プロトタイプ）</h1>
+    <div class="controls">
+        <div>
+            <label>時間 (希望開始時間): <input id="timeInput" type="time" /></label>
+        </div>
+        <div>
+            <label>最大価格(円): <input id="priceInput" type="number" min="0" step="100" /></label>
+        </div>
+        <div>
+            <label>最小人数: <input id="peopleInput" type="number" min="1" step="1" /></label>
+        </div>
+        <div>
+            <button id="searchBtn">検索</button>
+        </div>
+    </div>
+    <div id="result"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+
+    <script>
+        // --------- 設定: Airtable 公開ビューの CSV URL をここに入れてください ----------
+        // JSONファイルから読み込むため、URLは空欄にします
+        const AIRTABLE_CSV_URL = ''; 
+        
+        // localStorageキー
+        const LSKEY = 'studio_search_conditions_v1';
+
+        // ヘルパー: "HH:MM" => minutes
+        function toMinutes(hhmm){
+            if(!hhmm) return null;
+            const [h,m] = hhmm.split(':').map(Number);
+            return h*60 + m;
+        }
+
+        // エスケープ（簡易）
+        function escapeHtml(s){ return String(s || '').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>'); }
+        function escapeAttr(s){ return String(s || '').replace(/"/g,'"'); }
+
+        // 要素取得
+        const timeInput = document.getElementById('timeInput');
+        const priceInput = document.getElementById('priceInput');
+        const peopleInput = document.getElementById('peopleInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const result = document.getElementById('result');
+
+        // 初期値復元
+        const saved = JSON.parse(localStorage.getItem(LSKEY) || '{}');
+        if(saved.time) timeInput.value = saved.time;
+        if(saved.price) priceInput.value = saved.price;
+        if(saved.people) peopleInput.value = saved.people;
+
+        // レンタリング
+        function renderCards(items){
+            result.innerHTML = '';
+            if(items.length === 0){
+                result.innerHTML = '<p>該当するスタジオは見つかりませんでした。</p>';
+                return;
+            }
+            items.forEach(it=>{
+                // データ欠損時の安全チェック
+                if (!it.rate || !it.room) return; 
+                
+                const div = document.createElement('div');
+                div.className = 'card';
+                
+                div.innerHTML = '<h3>' + escapeHtml(it.studio_name) + ' - ' + escapeHtml(it.room_name) + '</h3>' +
+                    '<div class="meta">料金: ' + (it.rate.min_price ?? '-') + '円 ('+ escapeHtml(it.rate.rate_name || '') +')' +
+                    ' / 推奨最大: ' + (it.room.recommended_max ?? '-') + '人' +
+                    // cost_per_person はここで存在が保証される
+                    ' / 1人あたり: ' + (it.cost_per_person ? Math.round(it.cost_per_person) + '円' : '-') +
+                    '</div>' +
+                    '<p style="margin-top:8px;"><a href="'+escapeAttr(it.studio_url || '#')+'" target="_blank"><button>この部屋を予約する</button></a></p>';
+                result.appendChild(div);
+            });
+        }
+
+        // 検索処理
+        function runSearch(studios){
+            function search(){
+                const st = timeInput.value;
+                const maxPrice = priceInput.value ? Number(priceInput.value) : Infinity;
+                const minPeople = peopleInput.value ? Number(peopleInput.value) : 0;
+                localStorage.setItem(LSKEY, JSON.stringify({time:st, price: priceInput.value, people: peopleInput.value}));
+                const tmin = toMinutes(st);
+                const results = [];
+
+                studios.forEach(studio=>{
+                    (studio.rooms || []).forEach(room=>{
+                        (room.rates || []).forEach(rate=>{
+                            const s = toMinutes(rate.start_time);
+                            const e = toMinutes(rate.end_time);
+                            
+                            // 検索条件チェック
+                            if(tmin === null) return;
+                            if(!(s <= tmin && tmin < e)) return;
+                            if(rate.min_price != null && rate.min_price > maxPrice) return;
+                            if(room.recommended_max != null && room.recommended_max < minPeople) return;
+                            
+                            // 🚨 Cost Per Person の計算をここで行い、ゼロ除算を確実に防ぐ
+                            const isCalculable = rate.min_price != null && room.recommended_max != null && room.recommended_max > 0;
+                            const cost_per_person = isCalculable ? rate.min_price / room.recommended_max : null;
+                            
+                            results.push({
+                                studio_name: studio.studio_name,
+                                studio_url: studio.official_url,
+                                room_name: room.room_name,
+                                room: room,
+                                rate: rate,
+                                cost_per_person: cost_per_person // ここで値が確定する
+                            });
+                        });
+                    });
+                });
+
+                // コスト per person でソート（nullは最後に回る）
+                results.sort((a,b)=>(a.cost_per_person ?? Infinity) - (b.cost_per_person ?? Infinity));
+                renderCards(results);
+            }
+
+            searchBtn.addEventListener('click', search);
+            [timeInput, priceInput, peopleInput].forEach(inp=>{
+                inp.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') search(); });
+            });
+            // データロード後に初期検索を実行
+            search();
+        }
+
+
+        // ヘルパー：価格から「円」と日付を削除し、クリーンなデータを返す関数
+        function cleanRateData(r) {
+            // min_priceから「円」と数字以外の文字を削除して数値化
+            let price = (r.min_price || '').toString().replace(/[^\d.]/g, '');
+            price = price ? Number(price) : null;
+            
+            // start_time / end_time から時刻部分（HH:MM）だけを抽出 (例: "2025/11/4 10:00" -> "10:00")
+            const startTimeMatch = (r.start_time || '').match(/(\d{2}:\d{2})$/);
+            const endTimeMatch = (r.end_time || '').match(/(\d{2}:\d{2})$/);
+
+            return {
+                rate_name: (r.rate_name||'').trim(),
+                // 修正後の時刻を適用
+                start_time: startTimeMatch ? startTimeMatch[1] : (r.start_time||'').trim(), 
+                end_time: endTimeMatch ? endTimeMatch[1] : (r.end_time||'').trim(),
+                // 修正後の価格を適用
+                min_price: price 
+            };
+        }
+
+        // CSVを取得して解析 (今回は実行されない)
+        async function fetchCsvToStudios(url){
+             const res = await fetch(url);
+             if(!res.ok) throw new Error('CSV fetch failed: '+res.status);
+             const text = await res.text();
+             const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+             const rows = parsed.data; 
+             // CSVの場合もcleanRateDataを使用してデータ処理を統一
+             return processFetchedData(rows);
+        }
+
+        // data.json から読み込むフォールバック (✨ 今回はこれが実行される)
+        async function fetchLocalJson(){
+            const res = await fetch('data.json');
+            // JSONファイルが見つからない場合はエラーを出す
+            if(!res.ok) throw new Error('data.json fetch failed: '+res.status + ' - JSONファイルが見つからないか、パスが間違っています。');
+            const data = await res.json();
+            
+            // JSONの配列をCSVと同じ処理で構造化する
+            return processFetchedData(data);
+        }
+
+        // データ処理ロジック (CSV/JSON共通)
+        function processFetchedData(rows) {
+            const studiosMap = {};
+            rows.forEach(r=>{
+                 // studio_id, room_id, recommended_max, official_url はJSONデータに依存
+                 const sid = (r.studio_id || r.studio_name || '').toString().trim();
+                 if(!sid) return;
+
+                 if(!studiosMap[sid]) {
+                     studiosMap[sid] = { 
+                         id: sid, 
+                         studio_name: (r.studio_name||'').trim(), 
+                         official_url: (r.official_url||'').trim(), 
+                         rooms: {} 
+                     };
+                 }
+                 const s = studiosMap[sid];
+
+                 const rid = (r.room_id || r.room_name || '').toString().trim();
+                 if(!rid) return;
+                 
+                 if(!s.rooms[rid]) {
+                     s.rooms[rid] = { 
+                         id: rid, 
+                         room_name: (r.room_name||'').trim(), 
+                         recommended_max: r.recommended_max ? Number(r.recommended_max) : null, 
+                         rates: [] 
+                     };
+                 }
+                 
+                 // ヘルパー関数でデータをクリーンアップ
+                 const rate = cleanRateData(r);
+
+                 if(rate.rate_name && rate.start_time && rate.min_price !== null) {
+                      s.rooms[rid].rates.push(rate);
+                 }
+            });
+
+            return Object.values(studiosMap).map(s=>({ id: s.id, studio_name: s.studio_name, official_url: s.official_url, rooms: Object.values(s.rooms) }));
+        }
+
+
+        // ==========================================================
+        // メイン処理：非同期の初期化関数にラップし、実行する 
+        // ==========================================================
+        async function initializeApp(){
+            try{
+                let studios;
+                // 初期値設定 
+                if (!timeInput.value) { timeInput.value = '18:00'; }
+                if (!priceInput.value) { priceInput.value = '5000'; }
+                if (!peopleInput.value) { peopleInput.value = '5'; }
+                
+                if(AIRTABLE_CSV_URL && AIRTABLE_CSV_URL.trim() !== ''){
+                    console.log('Airtable CSVからのデータ取得を開始します...');
+                    studios = await fetchCsvToStudios(AIRTABLE_CSV_URL);
+                    
+                } else {
+                    console.log('AIRTABLE_CSV_URLが未設定のため、data.jsonからデータを読み込みます。');
+                    studios = await fetchLocalJson();
+                }
+                
+                // 💡 デバッグ用：データをコンソールに表示する (コメントアウトを解除)
+                console.log('--- 読み込まれた最終データ ---');
+                console.log(studios); 
+                
+                // 初期化完了後に検索をバインド
+                runSearch(studios);
+                
+            }catch(err){
+                console.error('データの読み込みに失敗しました。', err);
+                result.innerHTML = '<p style="color:red;">データの読み込みに失敗しました。コンソール (F12) のエラーを確認してください。</p>';
+            }
+        }
+
+        // ページが完全にロードされたら非同期の初期化関数を実行
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>

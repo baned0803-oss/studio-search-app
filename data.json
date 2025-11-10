@@ -1,0 +1,32 @@
+[
+  {
+    "rate_name": "接続テスト用",
+    "room_name": "RoomA1",
+    "start_time": "10:00",
+    "end_time": "20:00",
+    "min_price": 3000,
+    "recommended_max": 20,
+    "cost_per_person": 150,
+    "studio_name": "東京スタジオA"
+  },
+  {
+    "rate_name": "テスト2",
+    "room_name": "RoomA2",
+    "start_time": "10:00",
+    "end_time": "20:00",
+    "min_price": 2000,
+    "recommended_max": 10,
+    "cost_per_person": 200,
+    "studio_name": "東京スタジオA"
+  },
+  {
+    "rate_name": "テスト3",
+    "room_name": "RoomA1",
+    "start_time": "10:00",
+    "end_time": "20:00",
+    "min_price": 1000,
+    "recommended_max": 5,
+    "cost_per_person": 200,
+    "studio_name": "渋谷スタジオA"
+  }
+]
