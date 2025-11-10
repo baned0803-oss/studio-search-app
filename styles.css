@@ -593,6 +593,17 @@ button#searchBtn:active {
         padding: 20px 15px;
         margin-bottom: 30px;
     }
+    
+    /* 検索モード切替ボタン (search-toggle) を強制的に幅いっぱいにする */
+    .search-toggle {
+        width: 100%;
+        margin-bottom: 20px; /* フォームとの間にスペースを確保 */
+    }
+    
+    /* 検索モード切替ボタンの子要素を調整 */
+    .search-toggle button {
+        padding: 12px 10px; /* タップしやすいように調整 */
+    }
 
     .form-grid {
         grid-template-columns: 1fr; /* 1列に強制 */
@@ -600,12 +611,12 @@ button#searchBtn:active {
         margin-bottom: 15px;
     }
     
-    /* 🚨 縦並びにならない問題を解消するため、各フォームグループの幅を100%に強制 */
+    /* 🚨 横並び問題を解消するため、各フォームグループの幅を100%に強制 */
     .form-group {
         width: 100%;
         max-width: 100%;
+        margin-bottom: 5px;
     }
-
 
     .form-group label {
         font-size: 12px;
