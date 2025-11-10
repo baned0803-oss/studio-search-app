@@ -535,3 +535,62 @@ button#searchBtn:active {
     color: #fb7185; /* 赤系統 */
     font-weight: 800;
 }
+
+/* styles.cssの末尾に追加 */
+
+/* 結果ページ全体調整 */
+.is-results .container {
+    padding-top: 20px;
+}
+
+.results-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.results-header h1 {
+    font-size: 32px;
+    margin-bottom: 5px;
+}
+
+.results-header .subtitle {
+    font-size: 16px;
+    color: #94a3b8;
+}
+
+.summary-details {
+    color: #cbd5e1;
+    font-weight: normal;
+    margin-left: 15px;
+    font-size: 14px;
+}
+
+.back-link-top {
+    display: block;
+    text-align: left;
+    color: #60a5fa;
+    font-weight: 600;
+    text-decoration: none;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.back-link-top:hover {
+    text-decoration: underline;
+}
+
+/* 広告スペースのスタイル */
+.advertisement-space {
+    text-align: center;
+    padding: 20px;
+    margin-bottom: 40px;
+    background: rgba(148, 163, 184, 0.1);
+    border: 1px dashed rgba(148, 163, 184, 0.3);
+    border-radius: 8px;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.footer-ad {
+    margin-top: 50px;
+}
