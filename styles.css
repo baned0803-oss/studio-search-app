@@ -395,38 +395,45 @@ button#searchBtn:active {
 
 /* レスポンシブ */
 @media (max-width: 768px) {
-    .container {
-        padding: 20px 15px;
+    /* ... (既存のコード) ... */
+
+    /* --- スマートフォンでのフォーム微調整 --- */
+    
+    /* 検索ボタンを幅いっぱいに広げて押しやすくする */
+    button#searchBtn {
+        width: 100%;
+        margin-top: 10px; /* 他の入力欄との間隔を空ける */
+        padding: 18px; /* タッチしやすいようにパディングを大きくする */
     }
 
-    h1 {
-        font-size: 32px;
+    /* フォームグループのラベルと入力欄の間隔を詰める */
+    .form-group label {
+        margin-bottom: 5px; 
     }
 
-    .subtitle {
-        font-size: 14px;
+    /* 入力欄の高さを少し調整する */
+    input[type="date"],
+    input[type="time"], 
+    input[type="number"] {
+        padding: 12px 14px;
+    }
+    
+    /* 検索モード切替ボタン（トグル）のパディングを調整 */
+    .search-toggle button {
+        padding: 12px 10px; 
     }
 
-    .controls {
-        padding: 25px 20px;
+    /* コンテンツリンクボタンを縦に並べる (必要に応じて) */
+    .content-links {
+        display: flex;
+        flex-direction: column;
+        gap: 15px; /* ボタン間のスペース */
+        align-items: center;
     }
-
-    .form-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-
-    .card-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-
-    .card h3 {
-        font-size: 20px;
-    }
-
-    .cost-per-person .price {
-        font-size: 28px;
+    
+    .link-button {
+        width: 80%; /* ボタンを横幅いっぱいに近く広げる */
+        margin: 0; /* 左右の余白をリセット */
     }
 }
 /* --- 追加CSS --- */
