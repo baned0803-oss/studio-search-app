@@ -8,11 +8,14 @@ function toMinutes(hhmm){
     const [h,m] = hhmm.split(':').map(Number);
     return h*60 + m;
 }
+
+// ⭐ 追加された関数: 分をHH:MM形式に戻す ⭐
 function toHHMM(minutes) {
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;
     return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
 }
+
 function escapeHtml(s){ return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escapeAttr(s){ return String(s || '').replace(/"/g,'&quot;'); }
 function formatPrice(price) { return price !== null ? `¥${Math.round(price).toLocaleString()}` : '料金未設定'; }
@@ -23,18 +26,19 @@ function formatPrice(price) { return price !== null ? `¥${Math.round(price).toL
  * @returns {string} '平日', '土曜', '日曜'
  */
 function getDayOfWeek(dateStr) {
-    const date = new Date(dateStr);
+    // YYYY-MM-DDをそのままDateコンストラクタに渡すとタイムゾーン問題でズレる場合があるため、時刻を付けて日本時間に設定
+    const date = new Date(dateStr + 'T12:00:00+09:00'); 
     const day = date.getDay(); // 0:日曜, 1:月曜, ..., 6:土曜
     
+    if (isNaN(date)) return '平日'; // 無効な日付の場合はデフォルトで平日
     if (day === 0) return '日曜';
     if (day === 6) return '土曜';
     
     // 祝日判定ロジックは複雑なため、ここでは一旦 土日のみで判定
-    // 実際には外部APIやライブラリでの祝日判定が必要
     return '平日';
 }
 
-// データ処理ロジック（変更なし）
+// データクリーンアップロジック (曜日情報取得を追加)
 function cleanRateData(r) {
     let price = (r.min_price || '').toString().replace(/[^\d.]/g, '');
     price = price ? Number(price) : null;
@@ -44,18 +48,17 @@ function cleanRateData(r) {
 
     return {
         rate_name: (r.rate_name||'').trim(),
-        // ⭐ 曜日情報を追加で取得 ⭐
+        // ⭐ 曜日情報を取得するように修正 ⭐
         days_of_week: (r.days_of_week || '毎日').trim(), 
         start_time: startTimeMatch ? startTimeMatch[1] : (r.start_time||'').trim(),
         end_time: endTimeMatch ? endTimeMatch[1] : (r.end_time||'').trim(),
-        min_price: price // 1時間あたりの料金を想定
+        min_price: price 
     };
 }
 
 function processFetchedData(rows) {
     const studiosMap = {};
     rows.forEach(r=>{
-         // ... (中略：スタジオと部屋のグルーピング処理は変更なし) ...
          const sid = (r.studio_id || r.studio_name || '').toString().trim();
          if(!sid) return;
 
@@ -100,7 +103,7 @@ async function fetchLocalJson(){
     return processFetchedData(data);
 }
 
-// --- コスト計算関数 ---
+// --- ⭐ 追加されたコスト計算関数 ⭐ ---
 
 /**
  * 指定された利用時間帯の総額を計算する
@@ -113,12 +116,11 @@ async function fetchLocalJson(){
 function calculateTotalCost(rates, startMin, endMin, targetDayOfWeek) {
     let totalCost = 0;
     
-    // 料金計算は1時間単位で行う (30分単位は備考情報でカバー)
+    // 料金計算は1時間単位で行う (端数は切り上げ)
     const totalDurationHours = Math.ceil((endMin - startMin) / 60);
 
     for (let i = 0; i < totalDurationHours; i++) {
         const currentHourStartMin = startMin + i * 60;
-        const currentHourEndMin = Math.min(startMin + (i + 1) * 60, endMin);
         
         if (currentHourStartMin >= endMin) continue;
 
@@ -133,6 +135,7 @@ function calculateTotalCost(rates, startMin, endMin, targetDayOfWeek) {
             const dayMatches = rate.days_of_week === '毎日' || rate.days_of_week.includes(targetDayOfWeek);
             
             // 2. 時間帯が一致するかチェック (利用開始時が料金帯に含まれるか)
+            // 例: 17:00〜18:00の利用なら、17:00が料金帯に含まれるか
             const timeMatches = (rateStartMin <= currentHourStartMin && currentHourStartMin < rateEndMin);
 
             if (dayMatches && timeMatches) {
@@ -152,8 +155,7 @@ function calculateTotalCost(rates, startMin, endMin, targetDayOfWeek) {
     return totalCost;
 }
 
-
-// --- レンダリング関数 ---
+// --- レンダリング関数 (総額表示に対応して修正) ---
 function renderCards(items, requestedPeople, requestedArea, searchMode, totalDuration, targetDayOfWeek){
     const resultElement = document.getElementById('result');
     const summaryElement = document.getElementById('searchSummary');
@@ -164,7 +166,7 @@ function renderCards(items, requestedPeople, requestedArea, searchMode, totalDur
         return;
     }
     
-    const modeName = searchMode === 'night' ? '🌜 深夜パック' : `🌞 通常時間帯 (${totalDuration}時間利用)`;
+    const modeName = searchMode === 'night' ? '🌜 深夜パック' : `🌞 時間貸し (${totalDuration}時間利用)`;
     
     // サマリー表示を更新
     summaryElement.innerHTML = `
@@ -242,7 +244,7 @@ function renderCards(items, requestedPeople, requestedArea, searchMode, totalDur
     resultElement.appendChild(grid);
 }
 
-// --- 検索ロジック本体 ---
+// --- 検索ロジック本体 (総額計算に対応して修正) ---
 function runSearch(studios, params){
     const dateStr = params.date;
     const startMin = toMinutes(params.startTime);
@@ -253,8 +255,15 @@ function runSearch(studios, params){
 
     const targetDayOfWeek = getDayOfWeek(dateStr);
     const requiredArea = requestedPeople * AREA_PER_PERSON;
+    
+    // 利用時間の合計（端数切り上げ後の時間数）
     const totalDurationHours = Math.ceil((endMin - startMin) / 60);
 
+    if(requestedPeople <= 0 || (searchMode === 'day' && startMin >= endMin)) {
+        renderCards([], 0, 0, searchMode, 0, targetDayOfWeek);
+        return;
+    }
+    
     const results = [];
 
     studios.forEach(studio=>{
@@ -286,7 +295,7 @@ function runSearch(studios, params){
                     const rateName = (rate.rate_name || '').toLowerCase();
                     const isNightPack = rateName.includes('深夜') || rateName.includes('ナイトパック');
                     
-                    // Nightモードで、かつ曜日が一致するか（ここでは一旦'毎日'or'土日'を想定）
+                    // Nightモードで、かつ曜日が一致するか
                     const dayMatches = rate.days_of_week === '毎日' || rate.days_of_week.includes(targetDayOfWeek);
 
                     if(isNightPack && dayMatches) {
@@ -307,7 +316,7 @@ function runSearch(studios, params){
         });
     });
 
-    // ソート: 常に1人あたり総額（Day）または全体総額（Night）が安い順
+    // ソート: 常に全体総額が安い順
     results.sort((a,b)=>{
         return (a.totalCost ?? Infinity) - (b.totalCost ?? Infinity);
     });
@@ -317,13 +326,13 @@ function runSearch(studios, params){
 
 // --- 初期化処理 ---
 
-// URLパラメータから検索条件を取得
+// ⭐ getSearchParams 関数を修正 ⭐
 function getSearchParams() {
     const urlParams = new URLSearchParams(window.location.search);
     return {
-        date: urlParams.get('date') || '',
-        startTime: urlParams.get('startTime') || '00:00',
-        endTime: urlParams.get('endTime') || '00:00',
+        date: urlParams.get('date') || '', // ⭐ date を取得 ⭐
+        startTime: urlParams.get('startTime') || '00:00', // ⭐ startTime を取得 ⭐
+        endTime: urlParams.get('endTime') || '00:00', // ⭐ endTime を取得 ⭐
         price: Number(urlParams.get('price')) || Infinity,
         people: Number(urlParams.get('people')) || 0,
         mode: urlParams.get('mode') || 'day'
@@ -334,8 +343,8 @@ async function initializeApp(){
     try{
         const params = getSearchParams();
         
-        if (params.people <= 0) {
-             document.getElementById('result').innerHTML = '<div class="no-results">無効な検索条件です。検索ページに戻り、人数を指定してください。</div>';
+        if (params.people <= 0 || (params.mode === 'day' && (!params.date || params.startTime === params.endTime))) {
+             document.getElementById('result').innerHTML = '<div class="no-results">無効な検索条件です。検索ページに戻り、人数または時間帯を指定してください。</div>';
              document.getElementById('searchSummary').textContent = '';
              return;
         }
